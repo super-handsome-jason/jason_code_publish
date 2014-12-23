@@ -29,7 +29,7 @@ public class WebContentClawer
 	{
 		try
     {
-	    ArrayList<String> al =  new ArrayList<String>(500);
+	    ArrayList<String> al =  new ArrayList<String>(8000);
 			BufferedReader br = new BufferedReader(new FileReader(file_name));
 	    String ss = null;
 			while ((ss = br.readLine()) != null)
@@ -50,6 +50,9 @@ public class WebContentClawer
 	public String[] findDataString(String source_string)
 	{
 		if (source_string==null || source_string.equals(""))
+			return null;
+		
+		if (source_string.indexOf("此歌曲未授權") > -1)
 			return null;
 		
 		String[] music_data = new String[5];//歌名, 語言, 發行時間, 專輯名, 歌手
@@ -136,22 +139,33 @@ public class WebContentClawer
 	    
 			for (int i = 0; i < music_keys.length; ++i)
 			{
-				System.out.println("處理第" + (i+1) + "筆資料...");
-				String html_source = htc.getSite(WebContentClawer.SONG_HEADER + music_keys[i]);
-				//System.out.println(html_source);
-				String[] music_data = wcc.findDataString(html_source);
-				
-				StringBuffer row = new StringBuffer(music_keys[i]);
-				row.append("\t");
-	    	for (String column_str : music_data)
-	    		row.append(column_str).append("\t");
-	    	fw.write(row.toString().trim());
-	    	fw.write("\n");
-	    	fw.flush();
 				try
 	      {
+  				System.out.println("處理第" + (i+1) + "筆資料...");
+  				String html_source = htc.getSite(WebContentClawer.SONG_HEADER + music_keys[i]);
+  				//System.out.println(html_source);
+  				String[] music_data = wcc.findDataString(html_source);
+  				StringBuffer row = new StringBuffer(music_keys[i]);
+  				row.append("\t");
+  				if (music_data == null)
+  				{
+  					row.append("此歌曲未授權");
+  				}
+  				else
+  				{
+  					for (String column_str : music_data)
+    	    		row.append(column_str).append("\t");
+  				}
+  				
+  	    	fw.write(row.toString().trim());
+  	    	fw.write("\n");
+  	    	fw.flush();
 		      Thread.sleep(1000);
-	      }catch (InterruptedException e){};
+	      }
+				catch (Exception e)
+				{
+					e.printStackTrace();
+				}
 			}
     }
     catch (IOException e)
